@@ -1,15 +1,13 @@
-import { firestore } from 'firebase-admin';
-import admin = require('firebase-admin');
+//import { firestore } from 'firebase-admin';
+import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
+import { _databaseWithOptions } from 'firebase-functions/lib/providers/firestore';
+import { _bucketWithOptions } from 'firebase-functions/lib/providers/storage';
 
+
+// https://stackoverflow.com/questions/60262246/firebase-function-error-the-default-firebase-app-does-not-exist
+//strangely this needs to be here!
 admin.initializeApp();
-const fs = admin.firestore()
-// // Start writing Firebase Functions
-// // https://firebase.google.com/docs/functions/typescript
-//
-// export const helloWorld = functions.https.onRequest((request, response) => {
-//  response.send("Hello from Firebase!");
-// });
 
 export const makeSearchTextArray = functions.firestore.
             document('symptom/{symptomID}').onCreate((snapshot, context) => {
@@ -67,42 +65,16 @@ export const updateSearchTextArray = functions.firestore.
     return snapshot.after.ref.set(data, {merge:true})
 });
 
-
-/**
- * It can take up to 10 seconds for a function to respond to changes in Cloud Firestore.
- * Ordering is not guaranteed. Rapid changes can trigger function invocations in an unexpected order.
- * Events are delivered at least once, but a single event may result in multiple function invocations. Avoid depending on exactly-once mechanics, and write idempotent functions.
- * Cloud Firestore triggers for Cloud Functions is available only for Cloud Firestore in Native mode. It is not available for Cloud Firestore in Datastore mode.
- */
 export const creationTimestamp = functions.firestore.
                             document('/user/{userID}/observations/{observationID}').onCreate((snapshot, context) => {
 
-    const utc = firestore.FieldValue.serverTimestamp()
+    const utc = admin.firestore.FieldValue.serverTimestamp()
     let data = snapshot.data()
-    data.createTime = utc;
-    data.latest = true;
-                         
-    const user:string = context.params.userID;
-    const sym_doc_id:string = data.sym_doc_id;
-
-
-    fs.collection('/user/'+user+'/observations')
-        .where('latest','==',true).where('sym_doc_id','==',sym_doc_id).
-        get().then(
-        querySnapshot => {
-            querySnapshot.forEach( docSnap => {
-                if(docSnap.id != snapshot.id) // this is important becasue what will happen is that 
-                                              // by the time this query is executed the newly created
-                                              // object may already be marked as latest which means that 
-                                              // now there are two "latest=true" objects
-                docSnap.ref.set({latest:false},{merge:true}).then( s=>{ console.log() }, e=>{ console.log()})
-            })
-        },
-        error => console.log(error)
-    )
-
+    data.createTime = utc
+                            
     return snapshot.ref.set(data)
 });
+
 
 
 /*****
