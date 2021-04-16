@@ -75,6 +75,89 @@ export const creationTimestamp = functions.firestore.
     return snapshot.ref.set(data)
 });
 
+export  const vpkProfileAnalysis = functions.firestore.
+                            document('/user/{userID}/vpk/{vpkID}').onCreate((snapshot, context) => {
+
+    const utc = admin.firestore.FieldValue.serverTimestamp()
+    let data = snapshot.data()
+
+    console.log('**********')
+    console.log(data.answers)
+    console.log('**********')
+
+    let vC = 0
+    let pC = 0
+    let kC = 0
+    for(let i of data.answers){
+
+        if(i.answer == 'v')
+        vC++
+        else if(i.answer == 'p')
+        pC++
+        else if(i.answer == 'k')
+        kC++
+    }
+
+    let total = vC+pC+kC;
+    console.log(total)
+    vC = Math.round(vC/total*100)
+    pC = Math.round(pC/total*100)
+    kC = Math.round(kC/total*100)
+    console.log(vC, pC, kC)
+
+    let helix = 
+        [
+         {name:"Drive", kMin:0, kMax:25, pMin:75, pMax:100, vMin:0, vMax:25},
+         {name:"Spark", kMin:0, kMax:25, pMin:50, pMax:75, vMin:0, vMax:25},
+         {name:"Insight", kMin:0, kMax:25, pMin:50, pMax:75, vMin:25, vMax:50},
+         {name:"Wisdom", kMin:0, kMax:25, pMin:25, pMax:50, vMin:25, vMax:50},
+         {name:"Clarity", kMin:0, kMax:25, pMin:25, pMax:50, vMin:50, vMax:75},
+         {name:"Original", kMin:0, kMax:25, pMin:0, pMax:25, vMin:50, vMax:75},
+         {name:"Creativity", kMin:0, kMax:25, pMin:0, pMax:25, vMin:75, vMax:100},
+         {name:"Passion", kMin:25, kMax:50, pMin:50, pMax:75, vMin:0, vMax:25},
+         {name:"Courage", kMin:25, kMax:50, pMin:25, pMax:50, vMin:0, vMax:25},
+         {name:"Harmony", kMin:25, kMax:50, pMin:25, pMax:50, vMin:25, vMax:50},
+         {name:"Composed", kMin:25, kMax:50, pMin:0, pMax:25, vMin:25, vMax:50},
+         {name:"Compassion", kMin:25, kMax:50, pMin:0, pMax:25, vMin:50, vMax:75},
+         {name:"Vigor", kMin:50, kMax:75, pMin:25, pMax:50, vMin:0, vMax:25},
+         {name:"Resolve", kMin:50, kMax:75, pMin:0, pMax:25, vMin:0, vMax:25},
+         {name:"Calm", kMin:50, kMax:75, pMin:0, pMax:25, vMin:25, vMax:50},
+         {name:"Strength", kMin:75, kMax:100, pMin:0, pMax:25, vMin:0, vMax:25}
+        ] 
+    let result = null;
+    for(let i of helix)
+        if(i.vMin <= vC && vC <= i.vMax && i.pMin <= pC && pC <= i.pMax && i.kMin <= kC && kC <= i.kMax)
+            result = i.name
+
+
+    const _path:string[] = snapshot.ref.path.split('/')
+    console.log('/user/'+_path[1]+'/vpk-analysis')
+    console.log(_path[3])
+
+    let doc = admin.firestore().collection('/user/'+_path[1]+'/vpk-analysis').doc(_path[3])
+    doc.set({
+        result: result,
+        k: kC,
+        p: pC, 
+        v: vC,
+        utc: utc
+    }).then(status => {return snapshot.ref.set(data);}, error=> {return snapshot.ref.set(data);})
+
+    /*
+
+    admin.firestore().collection(_path.replace('vpk','vpk-analysis')).add({
+        k: kC,
+        p: pC, 
+        v: vC,
+        utc: utc
+    }).then(status => {return snapshot.ref.set(data);}, error=> {return snapshot.ref.set(data);})
+    */
+    return snapshot.ref.set(data);
+});
+
+
+
+
 
 
 /*****
