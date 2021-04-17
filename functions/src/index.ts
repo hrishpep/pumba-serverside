@@ -143,15 +143,6 @@ export  const vpkProfileAnalysis = functions.firestore.
         utc: utc
     }).then(status => {return snapshot.ref.set(data);}, error=> {return snapshot.ref.set(data);})
 
-    /*
-
-    admin.firestore().collection(_path.replace('vpk','vpk-analysis')).add({
-        k: kC,
-        p: pC, 
-        v: vC,
-        utc: utc
-    }).then(status => {return snapshot.ref.set(data);}, error=> {return snapshot.ref.set(data);})
-    */
     return snapshot.ref.set(data);
 });
 
