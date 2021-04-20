@@ -141,13 +141,78 @@ export  const vpkProfileAnalysis = functions.firestore.
         p: pC, 
         v: vC,
         utc: utc
-    }).then(status => {return snapshot.ref.set(data);}, error=> {return snapshot.ref.set(data);})
+    }).then(status => {return true;}, error=> {return true;})
 
-    return snapshot.ref.set(data);
+    let doc_count = admin.firestore().collection('/analytics/vpk-count/'+_path[1]).doc(_path[3]) // we do not want to overright the previous user record - so we make document name as user_id + utc
+    doc_count.set({
+        result: result,
+        k: kC,
+        p: pC, 
+        v: vC,
+        utc: utc
+    }).then(status => {return true;}, error=> {return true;})
+return true;
 });
 
+export  const vpk_count_update = functions.firestore.
+                            document('/analytics/vpk-count/{userID}/{vpkID}').onCreate((snapshot, context) => {
 
 
+        const _path:string[] = snapshot.ref.path.split('/')
+        let user_latest_rec:any = {};
+        let user_previous_rec:any = {};
+
+
+        admin.firestore().collection('/analytics/vpk-count/'+_path[2]).orderBy('utc','desc').limit(2).get().then((querySnapshot) => {
+
+            querySnapshot.forEach((doc) => {
+                console.log('*****: ',doc.data())
+                // doc.data() is never undefined for query doc snapshots
+                if(!user_latest_rec.id){
+                user_latest_rec.id = doc.id
+                user_latest_rec.data = doc.data()
+                }
+                else {
+                user_previous_rec.id = doc.id
+                user_previous_rec.data = doc.data() 
+                }            
+            })
+
+            if(user_latest_rec && user_previous_rec && (user_latest_rec.data.result == user_previous_rec.result))
+            return; // its the same nothing to do!
+
+
+            console.log('*****: :*****')
+            admin.firestore().collection("/analytics").doc('vpk-count').get().then(doc =>
+            {
+                // only relevant for the very first user ever using this
+                let new_data = doc.data();
+                if(!new_data)
+                    new_data = {}
+    
+                console.log('1::: ' , user_latest_rec)
+                console.log('2::: ' , user_previous_rec)
+                // only relevant when a category is getting value for the very first time
+                if(new_data[user_latest_rec.data.result])
+                new_data[user_latest_rec.data.result] =  new_data[user_latest_rec.data.result] + 1;
+                else  new_data[user_latest_rec.data.result] =  1;
+    
+                if(user_previous_rec.data) { // only run decrement if user previously had data
+                new_data[user_previous_rec.data.result] =  new_data[user_previous_rec.data.result] - 1;
+                }
+                
+                admin.firestore().collection("/analytics").doc('vpk-count').set(new_data).then(
+                    success=> {  console.log('success') }, error=> { console.log(error)}
+                )
+                
+            }, error => { console.log(error)});
+
+
+            }, error => { console.log(error)}
+        );
+        
+        return true;
+    });
 
 
 
