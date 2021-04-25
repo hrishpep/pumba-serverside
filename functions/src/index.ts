@@ -105,6 +105,7 @@ export  const vpkProfileAnalysis = functions.firestore.
     kC = Math.round(kC/total*100)
     console.log(vC, pC, kC)
 
+    /*
     let helix = 
         [
          {name:"Drive", kMin:0, kMax:25, pMin:75, pMax:100, vMin:0, vMax:25},
@@ -124,6 +125,25 @@ export  const vpkProfileAnalysis = functions.firestore.
          {name:"Calm", kMin:50, kMax:75, pMin:0, pMax:25, vMin:25, vMax:50},
          {name:"Strength", kMin:75, kMax:100, pMin:0, pMax:25, vMin:0, vMax:25}
         ] 
+    */
+
+    let helix = 
+        [
+         {name:"Drive", kMin:0, kMax:33, pMin:66, pMax:100, vMin:0, vMax:33},
+         {name:"Courage", kMin:33, kMax:66, pMin:33, pMax:66, vMin:0, vMax:33},
+         {name:"Spark", kMin:0, kMax:33, pMin:33, pMax:66, vMin:0, vMax:33},
+         {name:"Wisdom", kMin:0, kMax:33, pMin:33, pMax:66, vMin:33, vMax:66},
+         {name:"Strength", kMin:66, kMax:100, pMin:0, pMax:33, vMin:0, vMax:33},
+         {name:"Resolve", kMin:33, kMax:66, pMin:0, pMax:33, vMin:0, vMax:33},
+         {name:"Composure", kMin:33, kMax:66, pMin:0, pMax:33, vMin:33, vMax:66},
+         {name:"Originality", kMin:0, kMax:33, pMin:0, pMax:33, vMin:33, vMax:66},
+         {name:"Creativity", kMin:0, kMax:33, pMin:0, pMax:33, vMin:66, vMax:100},
+         // this one has to be at the end of the array as it is an override
+         {name:"Harmony", kMin:30, kMax:40, pMin:30, pMax:40, vMin:30, vMax:40},
+
+
+        ] 
+
     let result = null;
     for(let i of helix)
         if(i.vMin <= vC && vC <= i.vMax && i.pMin <= pC && pC <= i.pMax && i.kMin <= kC && kC <= i.kMax)
